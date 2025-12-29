@@ -1,0 +1,23 @@
+{
+  "name": "task-board",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "connect-mongo": "^6.0.0",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "express-session": "^1.18.2",
+    "mongoose": "^9.0.2",
+    "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
