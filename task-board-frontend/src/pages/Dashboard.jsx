@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-
 function Dashboard({ user }) {
     const [tasks, setTasks] = useState([]);
-    const [title, setTitle] = useState("");
 
+    // Load tasks ONCE
     useEffect(() => {
-        loadTasks();
+        fetchTasks();
     }, []);
 
-    async function loadTasks() {
+    async function fetchTasks() {
         const res = await fetch("http://localhost:3000/api/tasks", {
             credentials: "include"
         });
@@ -18,21 +17,34 @@ function Dashboard({ user }) {
         setTasks(data);
     }
 
-    async function createTask() {
-        if (!title) return;
-
-        const res = await fetch("http://localhost:3000/api/tasks", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ title })
+    // SOCKET CONNECTION
+    useEffect(() => {
+        const socket = io("http://localhost:3000", {
+            withCredentials: true
         });
 
-        if (res.ok) {
-            setTitle("");
-            loadTasks();
-        }
-    }
+        socket.on("taskUpdated", (data) => {
+            console.log("Task updated event received:", data);
+
+            // ✅ REAL-TIME STATE UPDATE (NO RELOAD)
+            setTasks((prevTasks) =>
+                prevTasks.map((task) =>
+                    task._id === data.taskId
+                        ? { ...task, status: data.status }
+                        : task
+                )
+            );
+
+            // ✅ ADMIN POPUP
+            if (user.role === "admin") {
+                alert(
+                    `User ${data.updatedBy} changed "${data.title}" to ${data.status}`
+                );
+            }
+        });
+
+        return () => socket.disconnect();
+    }, [user.role]);
 
     async function updateStatus(id, status) {
         await fetch(`http://localhost:3000/api/tasks/${id}`, {
@@ -41,32 +53,20 @@ function Dashboard({ user }) {
             credentials: "include",
             body: JSON.stringify({ status })
         });
-
-        loadTasks();
     }
 
     return (
         <div>
             <h2>Task Board</h2>
-            <p>Logged in as: <b>{user.name}</b> ({user.role})</p>
+            <p>
+                Logged in as <b>{user.name}</b> ({user.role})
+            </p>
 
-            {/* ADMIN PANEL */}
-            {user.role === "admin" && (
-                <div style={{ border: "2px solid black", padding: 10, marginBottom: 20 }}>
-                    <h3>Admin Panel</h3>
-
-                    <input
-                        placeholder="Task title"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                    />
-                    <button onClick={createTask}>Create Task</button>
-                </div>
-            )}
-
-            {/* TASK LIST */}
-            {tasks.map(task => (
-                <div key={task._id} style={{ border: "1px solid #ccc", padding: 10, marginBottom: 10 }}>
+            {tasks.map((task) => (
+                <div
+                    key={task._id}
+                    style={{ border: "1px solid #ccc", padding: 10, marginBottom: 10 }}
+                >
                     <h4>{task.title}</h4>
                     <p>Status: {task.status}</p>
 
