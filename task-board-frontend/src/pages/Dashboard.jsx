@@ -1,12 +1,28 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
+
+
 function Dashboard({ user }) {
     const [tasks, setTasks] = useState([]);
     const [title, setTitle] = useState("");
-
     useEffect(() => {
-        loadTasks();
+        console.log("Dashboard mounted — trying socket connection");
+
+        const socket = io("http://localhost:3000", {
+            withCredentials: true
+        });
+
+        socket.on("connect", () => {
+            console.log("✅ Socket connected:", socket.id);
+        });
+
+        socket.on("connect_error", (err) => {
+            console.error("❌ Socket connection error:", err);
+        });
+
+        return () => socket.disconnect();
     }, []);
+
 
     async function loadTasks() {
         const res = await fetch("http://localhost:3000/api/tasks", {

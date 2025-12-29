@@ -34,19 +34,7 @@ app.use(
 
 // Session setup
 
-app.use(
-    session({
-        secret: "taskboard_secret_key",
-        resave: false,
-        saveUninitialized: false,
-        store: MongoStore.create({
-            mongoUrl:
-                "mongodb+srv://taskboardUser:Maryam21@taskboard-cluster.sx59xhi.mongodb.net/taskboard",
-            collectionName: "sessions"
-        }),
-        cookie: { maxAge: 1000 * 60 * 60 } // 1 hour
-    })
-);
+
 app.use(
     session({
         secret: "taskboard_secret_key",
@@ -92,12 +80,18 @@ const PORT = 3000;
 // });
 const server = http.createServer(app);
 
+// const io = new Server(server, {
+//     cors: {
+//         origin: "*"
+//     }
+// });
+
 const io = new Server(server, {
     cors: {
-        origin: "*"
+        origin: "http://localhost:5173",
+        credentials: true
     }
 });
-
 io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
 

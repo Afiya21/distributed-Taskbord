@@ -44,38 +44,58 @@ router.get("/", isAuthenticated, async (req, res) => {
 });
 
 // USER: Update task status
+// router.put("/:id", isAuthenticated, async (req, res) => {
+//     try {
+//         const { status } = req.body;
+
+//         if (!["todo", "in-progress", "done"].includes(status)) {
+//             return res.status(400).json({ message: "Invalid status" });
+//         }
+
+//         const task = await Task.findById(req.params.id);
+//         if (!task) {
+//             return res.status(404).json({ message: "Task not found" });
+//         }
+
+
+//         task.status = status;
+//         await task.save();
+
+//         // Emit real-time event WITH user info
+//         req.app.get("io").emit("taskUpdated", {
+//             taskId: task._id,
+//             title: task.title,
+//             status: task.status,
+//             updatedBy: req.session.user.name
+//         });
+
+//         res.json(task);
+
+
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ message: "Server error" });
+//     }
+// });
 router.put("/:id", isAuthenticated, async (req, res) => {
-    try {
-        const { status } = req.body;
+    const task = await Task.findById(req.params.id);
 
-        if (!["todo", "in-progress", "done"].includes(status)) {
-            return res.status(400).json({ message: "Invalid status" });
-        }
+    task.status = req.body.status;
+    await task.save();
 
-        const task = await Task.findById(req.params.id);
-        if (!task) {
-            return res.status(404).json({ message: "Task not found" });
-        }
+    const io = req.app.get("io");
 
+    io.emit("taskUpdated", {
+        taskId: task._id,
+        title: task.title,
+        status: task.status,
+        updatedBy: req.session.user.name
+    });
 
-        task.status = status;
-        await task.save();
+    console.log("Emitted taskUpdated event");
 
-        // Emit real-time event WITH user info
-        req.app.get("io").emit("taskUpdated", {
-            taskId: task._id,
-            title: task.title,
-            status: task.status,
-            updatedBy: req.session.user.name
-        });
-
-        res.json(task);
-
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Server error" });
-    }
+    res.json(task);
 });
+
 
 module.exports = router;
