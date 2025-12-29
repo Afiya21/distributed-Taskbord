@@ -41,7 +41,7 @@ router.post("/register", async (req, res) => {
 });
 
 // LOGIN
-// LOGIN
+
 router.post("/login", async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -73,6 +73,18 @@ router.post("/login", async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 });
+// LOGOUT
+router.post("/logout", (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).json({ message: "Logout failed" });
+        }
+
+        res.clearCookie("connect.sid");
+        res.json({ message: "Logged out successfully" });
+    });
+});
+
 router.get("/me", (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ message: "Not logged in" });
